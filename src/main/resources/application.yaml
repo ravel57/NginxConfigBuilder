@@ -4,3 +4,7 @@ server:
 spring:
   application:
     name: NginxConfigBuilder
+
+credentials:
+  username: ${USERNAME}
+  password: ${PASSWORD}
