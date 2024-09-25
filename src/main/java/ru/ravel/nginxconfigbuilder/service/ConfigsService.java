@@ -12,7 +12,7 @@ import java.time.ZoneId;
 @Service
 public class ConfigsService {
 
-	Certificate getCertificate(String certPath) {
+	public Certificate getCertificate(String certPath) {
 		if (certPath == null || certPath.isEmpty()) return null;
 		try {
 			CertificateFactory certFactory = CertificateFactory.getInstance("X.509");

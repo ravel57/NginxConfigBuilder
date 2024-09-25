@@ -8,5 +8,9 @@ spring:
 credentials:
   login: ${LOGIN}
   password: ${PASSWORD}
+
+certificate:
   email: ${EMAIL}
-  domain: ${DOMAIN}
+
+nginx:
+  config-path: ${CONFIG_PATH}

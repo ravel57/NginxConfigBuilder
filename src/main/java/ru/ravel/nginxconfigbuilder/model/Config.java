@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class Config {
-	private String serverName;
+	private String domainName;
 	private String port;
 	private Location location;
 	private Certificate certificates;

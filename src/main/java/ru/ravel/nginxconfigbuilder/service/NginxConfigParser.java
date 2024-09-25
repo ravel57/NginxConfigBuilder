@@ -5,6 +5,7 @@ import com.github.odiszapc.nginxparser.NgxConfig;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.ravel.nginxconfigbuilder.model.Config;
 import ru.ravel.nginxconfigbuilder.model.Location;
@@ -21,12 +22,15 @@ public class NginxConfigParser {
 
 	private final ConfigsService configsService;
 
+	@Value("${nginx.config-path}")
+	private String configPath;
+
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
 
 	public List<Config> getConfigInfo() {
 		try {
-			NgxConfig conf = NgxConfig.read("C:\\Users\\petr\\Desktop\\nginx.conf");
+			NgxConfig conf = NgxConfig.read(configPath);
 			List<Upstream> upstreams = conf.findAll(NgxConfig.BLOCK, "http", "upstream").stream()
 					.map(entry -> (NgxBlock) entry)
 					.map(entry -> Upstream.builder()
@@ -37,7 +41,7 @@ public class NginxConfigParser {
 			List<Config> configs = conf.findAll(NgxConfig.BLOCK, "http", "server").stream()
 					.map(entry -> (NgxBlock) entry)
 					.map(entry -> Config.builder()
-							.serverName(Objects.requireNonNullElse(entry.findParam("server_name"), entry).getValue())
+							.domainName(Objects.requireNonNullElse(entry.findParam("server_name"), entry).getValue())
 							.port(entry.findParam("listen").getValue())
 							.location(Location.builder()
 									.proxyPass(entry.findAll(NgxConfig.BLOCK, "location").stream()
