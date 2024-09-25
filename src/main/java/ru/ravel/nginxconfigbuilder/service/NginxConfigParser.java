@@ -58,7 +58,7 @@ public class NginxConfigParser {
 					.filter(entry -> !entry.getLocation().getProxyPass().isEmpty())
 					.forEach(entry -> {
 						Upstream upstream = upstreams.stream()
-								.filter(it -> it.getName().equals(entry.getLocation().getProxyPass().getFirst().replace("http://", "")))
+								.filter(it -> it.getName().endsWith(entry.getLocation().getProxyPass().getFirst()))
 								.findFirst()
 								.orElse(new Upstream());
 						entry.getLocation().setUpstream(upstream.getServer());

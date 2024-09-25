@@ -32,16 +32,22 @@ public class CertBotRunner implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
-		List<Config> configs = nginxConfigParser.getConfigInfo()
+		List<Config> configsWithDomains = nginxConfigParser.getConfigInfo()
 				.stream()
-				.filter(it -> it.getCertificates() != null)
+				.filter(config -> config.getDomainName() != null)
+				.filter(config -> !config.getDomainName().isEmpty())
 				.toList();
-		for (Config config : configs) {
+		for (Config config : configsWithDomains) {
 			String[] params = {"certbot", "certonly", "--standalone", "-d", config.getDomainName(), "--non-interactive", "--agree-tos", "--email", email};
 			boolean pathExist = new File(config.getCertificates().getPath()).exists();
 			if (pathExist) {
-				Certificate certificate = configsService.getCertificate(config.getCertificates().getPath());
-				if (certificate.getNotAfter().isBefore(ZonedDateTime.now())) {
+				try {
+					Certificate certificate = configsService.getCertificate(config.getCertificates().getPath());
+					if (certificate.getNotAfter().isBefore(ZonedDateTime.now())) {
+						params = new String[]{"certbot", "renew", "--non-interactive", "--quiet"};
+						System.out.println(executeProcess(params).stream().map(Arrays::asList).flatMap(Collection::stream).toList());
+					}
+				} catch (Exception e) {
 					System.out.println(executeProcess(params).stream().map(Arrays::asList).flatMap(Collection::stream).toList());
 				}
 			} else {
@@ -53,12 +59,10 @@ public class CertBotRunner implements CommandLineRunner {
 
 	private static ArrayList<String[]> executeProcess(String[] processParams) throws IOException, InterruptedException {
 		Process process = new ProcessBuilder().command(processParams).start();
-		ArrayList<String[]> output = new ArrayList<>();
 		BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-		String line;
-		while ((line = reader.readLine()) != null) {
-			output.add(line.replaceAll("\\s+", " ").split(" "));
-		}
+		ArrayList<String[]> output = (ArrayList<String[]>) reader.lines()
+				.map(line -> line.replaceAll("\\s+", " ").split(" "))
+				.toList();
 		process.waitFor();
 		return output;
 	}
