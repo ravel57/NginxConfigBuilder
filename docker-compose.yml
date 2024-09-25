@@ -16,7 +16,7 @@ services:
       - CONFIG_PATH=/home/gradle/nginx/nginx.conf
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt
-      - /home/anton/LoadBalancer:/home/gradle/nginx
+      - /var/load_balancer:/home/gradle/nginx
 
 networks:
   default:

@@ -1,18 +1,19 @@
 package ru.ravel.nginxconfigbuilder.model;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+
+import java.util.List;
+
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
 @Builder
 public class Config {
-	private String domainName;
-	private String port;
-	private Location location;
+	private String domain;
+	private Integer port;
+	private Boolean isSsl;
+	private List<Location> location;
+	private String upstream;
 	private Certificate certificates;
 	private String certificatesKeyPath;
 }

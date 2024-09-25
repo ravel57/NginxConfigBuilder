@@ -1,17 +1,15 @@
 package ru.ravel.nginxconfigbuilder.model;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
 @Builder
 public class Location {
-	private List<String> proxyPass;
-	private String upstream;
+	private String location;
+	private String proxyPass;
+	private List<Pair> proxySetHeaders;
 }

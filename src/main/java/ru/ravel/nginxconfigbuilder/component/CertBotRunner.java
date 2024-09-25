@@ -34,11 +34,11 @@ public class CertBotRunner implements CommandLineRunner {
 	public void run(String... args) throws Exception {
 		List<Config> configsWithDomains = nginxConfigParser.getConfigInfo()
 				.stream()
-				.filter(config -> config.getDomainName() != null)
-				.filter(config -> !config.getDomainName().isEmpty())
+				.filter(config -> config.getDomain() != null)
+				.filter(config -> !config.getDomain().isEmpty())
 				.toList();
 		for (Config config : configsWithDomains) {
-			String[] params = {"certbot", "certonly", "--standalone", "-d", config.getDomainName(), "--non-interactive", "--agree-tos", "--email", email};
+			String[] params = {"certbot", "certonly", "--standalone", "-d", config.getDomain(), "--non-interactive", "--agree-tos", "--email", email};
 			boolean pathExist = new File(config.getCertificates().getPath()).exists();
 			if (pathExist) {
 				try {
