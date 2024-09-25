@@ -6,5 +6,7 @@ spring:
     name: NginxConfigBuilder
 
 credentials:
-  username: ${USERNAME}
+  login: ${LOGIN}
   password: ${PASSWORD}
+  email: ${EMAIL}
+  domain: ${DOMAIN}

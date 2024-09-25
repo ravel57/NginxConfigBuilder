@@ -1,0 +1,32 @@
+version: "3"
+services:
+  webapp:
+    build: .
+    restart: always
+    ports:
+      - "8080:8080"
+      - "80:80"
+    expose:
+      - 8080
+      - 80
+    environment:
+      - LOGIN=admin
+      - PASSWORD=admin
+      - EMAIL=petyalom@yandex.ru
+      - DOMAIN=test.ravel57.ru
+    volumes:
+      - /var/www/html:/var/www/html
+      - /etc/letsencrypt:/etc/letsencrypt
+      - /var/lib/letsencrypt:/var/lib/letsencrypt
+  nginx:
+    image: nginx
+    volumes:
+      - /path/to/your/webroot:/var/www/html
+    ports:
+      - "80:80"
+
+networks:
+  default:
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1450

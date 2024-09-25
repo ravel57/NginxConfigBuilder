@@ -18,8 +18,8 @@ import java.util.Objects;
 @Component
 public class CustomAuthenticationProvider implements AuthenticationProvider {
 
-	@Value("${credentials.username}")
-	String username;
+	@Value("${credentials.login}")
+	String login;
 
 	@Value("${credentials.password}")
 	String password;
@@ -29,7 +29,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 		String username = authentication.getName();
 		String password = authentication.getCredentials().toString();
-		if (Objects.equals(username, this.username) && Objects.equals(password, this.password)) {
+		if (Objects.equals(username, this.login) && Objects.equals(password, this.password)) {
 			List<GrantedAuthority> authorities = new ArrayList<>();
 			UserDetails userDetails = new User(username, password, authorities);
 			return new UsernamePasswordAuthenticationToken(userDetails, password, authorities);
