@@ -13,7 +13,7 @@ public class Config {
 	private Integer port;
 	private Boolean isSsl;
 	private List<Location> location;
-	private String upstream;
+	private Upstream upstream;
 	private Certificate certificates;
 	private String certificatesKeyPath;
 }

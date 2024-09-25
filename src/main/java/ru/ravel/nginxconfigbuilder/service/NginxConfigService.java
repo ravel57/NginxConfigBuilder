@@ -93,7 +93,7 @@ public class NginxConfigService {
 								.filter(it -> entry.getLocation().stream().anyMatch(el -> el.getProxyPass().endsWith(it.getName())))
 								.findFirst()
 								.orElse(Upstream.builder().build());
-						entry.setUpstream(upstream.getServer());
+						entry.setUpstream(upstream);
 					});
 			return configs;
 		} catch (IOException e) {
