@@ -13,7 +13,7 @@ services:
       - LOGIN=admin
       - PASSWORD=admin
       - EMAIL=petyalom@yandex.ru
-      - CONFIG_PATH=/home/anton/LoadBalancer/nginx.conf
+      - CONFIG_PATH=/home/gradle/nginx/nginx.conf
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt
       - /home/anton/LoadBalancer:/home/gradle/nginx
