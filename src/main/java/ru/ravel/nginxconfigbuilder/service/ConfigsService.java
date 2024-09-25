@@ -1,6 +1,7 @@
 package ru.ravel.nginxconfigbuilder.service;
 
 import org.springframework.stereotype.Service;
+import ru.ravel.nginxconfigbuilder.model.Certificate;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -10,18 +11,26 @@ import java.time.ZoneId;
 
 @Service
 public class ConfigsService {
-	public static void main(String[] args) {
+
+	Certificate getCertificate(String certPath) {
+		if (certPath == null || certPath.isEmpty()) return null;
 		try {
-			String certPath = "C:\\Users\\petr\\Desktop\\fullchain1.pem";
 			CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
 			InputStream inputStream = new FileInputStream(certPath);
 			X509Certificate certificate = (X509Certificate) certFactory.generateCertificate(inputStream);
 			inputStream.close();
-			System.out.println("Владелец: " + certificate.getSubjectX500Principal().getName());
-			System.out.println("Срок действия с: " + certificate.getNotBefore().toInstant().atZone(ZoneId.systemDefault()));
-			System.out.println("Срок действия до: " + certificate.getNotAfter().toInstant().atZone(ZoneId.systemDefault()));
+			return Certificate.builder()
+					.principal(certificate.getSubjectX500Principal().getName())
+					.notBefore(certificate.getNotBefore().toInstant().atZone(ZoneId.systemDefault()))
+					.notAfter(certificate.getNotAfter().toInstant().atZone(ZoneId.systemDefault()))
+					.path(certPath)
+					.build();
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
+	}
+
+	public static void main(String[] args) {
+
 	}
 }

@@ -39,6 +39,9 @@ dependencies {
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 
+//	nginx-parser
+	implementation 'com.github.odiszapc:nginxparser:0.9.6'
+
 //	test
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
