@@ -10,7 +10,7 @@ import java.security.cert.X509Certificate;
 import java.time.ZoneId;
 
 @Service
-public class ConfigsService {
+public class CertificateService {
 
 	public Certificate getCertificate(String certPath) {
 		if (certPath == null || certPath.isEmpty()) return null;
@@ -30,7 +30,4 @@ public class ConfigsService {
 		}
 	}
 
-	public static void main(String[] args) {
-
-	}
 }

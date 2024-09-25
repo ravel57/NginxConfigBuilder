@@ -3,7 +3,7 @@ package ru.ravel.nginxconfigbuilder.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.ravel.nginxconfigbuilder.service.NginxConfigParser;
+import ru.ravel.nginxconfigbuilder.service.NginxConfigService;
 
 
 @RestController
@@ -11,11 +11,11 @@ import ru.ravel.nginxconfigbuilder.service.NginxConfigParser;
 @RequiredArgsConstructor
 public class ApiController {
 
-	private final NginxConfigParser nginxConfigParser;
+	private final NginxConfigService nginxConfigService;
 
 	@GetMapping("/get-configs")
 	public ResponseEntity<Object> getConfigs() {
-		return ResponseEntity.ok().body(nginxConfigParser.getConfigInfo());
+		return ResponseEntity.ok().body(nginxConfigService.getConfigInfo());
 	}
 
 }

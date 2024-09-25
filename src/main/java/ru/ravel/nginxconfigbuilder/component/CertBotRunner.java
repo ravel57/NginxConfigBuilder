@@ -1,13 +1,16 @@
 package ru.ravel.nginxconfigbuilder.component;
 
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import ru.ravel.nginxconfigbuilder.model.Certificate;
 import ru.ravel.nginxconfigbuilder.model.Config;
-import ru.ravel.nginxconfigbuilder.service.ConfigsService;
-import ru.ravel.nginxconfigbuilder.service.NginxConfigParser;
+import ru.ravel.nginxconfigbuilder.service.CertBotService;
+import ru.ravel.nginxconfigbuilder.service.CertificateService;
+import ru.ravel.nginxconfigbuilder.service.NginxConfigService;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -24,47 +27,28 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CertBotRunner implements CommandLineRunner {
 
-	private final ConfigsService configsService;
-	private final NginxConfigParser nginxConfigParser;
+	private final CertificateService certificateService;
+	private final NginxConfigService nginxConfigService;
+	private final CertBotService certBotService;
 
-	@Value("${certificate.email}")
-	private String email;
 
 	@Override
-	public void run(String... args) throws Exception {
-		List<Config> configsWithDomains = nginxConfigParser.getConfigInfo()
+	public void run(String... args) {
+		nginxConfigService.getConfigInfo()
 				.stream()
 				.filter(config -> config.getDomain() != null)
 				.filter(config -> !config.getDomain().isEmpty())
-				.toList();
-		for (Config config : configsWithDomains) {
-			String[] params = {"certbot", "certonly", "--standalone", "-d", config.getDomain(), "--non-interactive", "--agree-tos", "--email", email};
-			boolean pathExist = new File(config.getCertificates().getPath()).exists();
-			if (pathExist) {
-				try {
-					Certificate certificate = configsService.getCertificate(config.getCertificates().getPath());
-					if (certificate.getNotAfter().isBefore(ZonedDateTime.now())) {
-						params = new String[]{"certbot", "renew", "--non-interactive", "--quiet"};
-						System.out.println(executeProcess(params).stream().map(Arrays::asList).flatMap(Collection::stream).toList());
+				.forEach(config -> {
+					boolean pathExist = new File(config.getCertificates().getPath()).exists();
+					if (pathExist) {
+						Certificate certificate = certificateService.getCertificate(config.getCertificates().getPath());
+						if (certificate.getNotAfter().isBefore(ZonedDateTime.now())) {
+							certBotService.renewCertificate();
+						}
+					} else {
+						certBotService.issueCertificate(config.getDomain());
 					}
-				} catch (Exception e) {
-					System.out.println(executeProcess(params).stream().map(Arrays::asList).flatMap(Collection::stream).toList());
-				}
-			} else {
-				System.out.println(executeProcess(params).stream().map(Arrays::asList).flatMap(Collection::stream).toList());
-			}
-		}
-	}
-
-
-	private static ArrayList<String[]> executeProcess(String[] processParams) throws IOException, InterruptedException {
-		Process process = new ProcessBuilder().command(processParams).start();
-		BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-		ArrayList<String[]> output = (ArrayList<String[]>) reader.lines()
-				.map(line -> line.replaceAll("\\s+", " ").split(" "))
-				.toList();
-		process.waitFor();
-		return output;
+				});
 	}
 
 }
