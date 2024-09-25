@@ -66,7 +66,7 @@ public class NginxConfigParser {
 			return configs;
 		} catch (IOException e) {
 			logger.error(e.getMessage(), e);
+			return null;
 		}
-		return null;
 	}
 }
