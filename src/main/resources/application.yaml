@@ -6,11 +6,11 @@ spring:
     name: NginxConfigBuilder
 
 credentials:
-  login: ${LOGIN}
-  password: ${PASSWORD}
+  login: ${LOGIN:admin}
+  password: ${PASSWORD:admin}
 
 certificate:
   email: ${EMAIL}
 
 nginx:
-  config-path: ${CONFIG_PATH}
+  config-path: ${CONFIG_PATH:/etc/nginx/nginx.conf}

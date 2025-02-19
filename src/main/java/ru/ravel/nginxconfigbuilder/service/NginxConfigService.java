@@ -32,10 +32,14 @@ public class NginxConfigService {
 			NgxConfig conf = NgxConfig.read(configPath);
 			List<Upstream> upstreams = conf.findAll(NgxConfig.BLOCK, "http", "upstream").stream()
 					.map(entry -> (NgxBlock) entry)
-					.map(entry -> Upstream.builder()
-							.name(((List<?>) entry.getTokens()).getLast().toString())
-							.server(entry.findParam("server").getValue())
-							.build())
+					.map(entry -> {
+						String[] split = entry.findParam("server").getValue().split(":");
+						return Upstream.builder()
+								.name(((List<?>) entry.getTokens()).getLast().toString())
+								.host(split[0])
+								.port(Integer.valueOf(split[1]))
+								.build();
+					})
 					.toList();
 			List<Config> configs = conf.findAll(NgxConfig.BLOCK, "http", "server").stream()
 					.map(entry -> (NgxBlock) entry)
@@ -90,7 +94,7 @@ public class NginxConfigService {
 					.filter(entry -> entry.getLocation() != null)
 					.forEach(entry -> {
 						Upstream upstream = upstreams.stream()
-								.filter(it -> entry.getLocation().stream().anyMatch(el -> el.getProxyPass().endsWith(it.getName())))
+								.filter(u -> entry.getLocation().stream().anyMatch(l -> l.getProxyPass().endsWith(u.getName())))
 								.findFirst()
 								.orElse(Upstream.builder().build());
 						entry.setUpstream(upstream);
@@ -124,5 +128,11 @@ public class NginxConfigService {
 			}
 		}
 		return null;
+	}
+
+
+	public Config addNewConfig(Config config) {
+
+		return config;
 	}
 }

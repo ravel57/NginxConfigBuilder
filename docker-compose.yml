@@ -13,10 +13,10 @@ services:
       - LOGIN=admin
       - PASSWORD=admin
       - EMAIL=petyalom@yandex.ru
-      - CONFIG_PATH=/home/gradle/nginx/nginx.conf
+      - CONFIG_PATH=/etc/nginx/nginx.conf
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt
-      - /var/load_balancer:/home/gradle/nginx
+      - /var/load_balancer:/etc/nginx/
 
 networks:
   default:

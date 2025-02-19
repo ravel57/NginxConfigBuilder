@@ -8,5 +8,6 @@ import lombok.Data;
 @Builder
 public class Upstream {
 	private String name;
-	private String server;
+	private String host;
+	private Integer port;
 }

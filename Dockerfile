@@ -10,8 +10,9 @@ FROM gradle:8.7.0-jdk21-alpine AS gradle
 COPY --chown=gradle:gradle . /home/gradle/
 COPY --from=nodejs /home/node/nginx-config-builder/dist/spa/.   /home/gradle/src/main/resources/static/
 WORKDIR  /home/gradle/
-RUN apk add --no-cache certbot
+RUN apk add --no-cache certbot nginx
 RUN gradle bootJar
+RUN ls -l /etc/nginx/
 CMD ["java", "-jar", "build/libs/NginxConfigBuilder-0.1.jar"]
 
 #FROM alpine/java:22-jdk AS java
