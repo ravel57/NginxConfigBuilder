@@ -144,7 +144,7 @@ public class NginxConfigService {
 			ngxBlockLocation.addValue("/");
 
 			NgxParam ngxParam = new NgxParam();
-			ngxParam.addValue("listen %s".formatted(config.getPort()));
+			ngxParam.addValue("listen %s%s".formatted(config.getPort(), config.getIsSsl() ? " ssl" : ""));
 			server.addEntry(ngxParam);
 
 			ngxParam = new NgxParam();
@@ -179,7 +179,7 @@ public class NginxConfigService {
 			ngxBlockUpstream.addEntry(ngxParam);
 
 			ngxParam = new NgxParam();
-			ngxParam.addValue("proxy_pass %s".formatted(proxyPass));
+			ngxParam.addValue("proxy_pass http://%s".formatted(proxyPass));
 			ngxBlockLocation.addEntry(ngxParam);
 
 			ngxParam = new NgxParam();
