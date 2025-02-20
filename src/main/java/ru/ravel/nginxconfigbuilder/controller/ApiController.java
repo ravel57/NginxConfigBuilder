@@ -15,15 +15,27 @@ public class ApiController {
 	private final NginxConfigService nginxConfigService;
 
 
-	@GetMapping("/get-configs")
+	@GetMapping("/configs")
 	public ResponseEntity<Object> getConfigs() {
-		return ResponseEntity.ok().body(nginxConfigService.getConfigInfo());
+		return ResponseEntity.ok().body(nginxConfigService.getConfigs());
 	}
 
 
-	@PostMapping("/add-new-config")
+	@PostMapping("/config")
 	public ResponseEntity<Object> addNewConfig(@RequestBody Config config) {
-		return ResponseEntity.ok().body(nginxConfigService.addNewConfig(config));
+		return ResponseEntity.ok().body(nginxConfigService.saveConfig(config));
+	}
+
+
+	@DeleteMapping("/config")
+	public ResponseEntity<Object> deleteConfig(@RequestBody Config config) {
+		return ResponseEntity.ok().body(nginxConfigService.deleteConfig(config));
+	}
+
+
+	@PostMapping("/renew-certificate")
+	public ResponseEntity<Object> renewCertificate(@RequestBody Config config) {
+		return ResponseEntity.ok().body(nginxConfigService.renewCertificate(config));
 	}
 
 

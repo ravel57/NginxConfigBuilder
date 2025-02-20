@@ -23,7 +23,7 @@ public class CertBotRunner implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) {
-		nginxConfigService.getConfigInfo()
+		nginxConfigService.getConfigs()
 				.stream()
 				.filter(config -> config.getDomain() != null)
 				.filter(config -> !config.getDomain().isEmpty())

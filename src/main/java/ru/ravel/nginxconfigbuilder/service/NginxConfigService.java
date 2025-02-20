@@ -9,10 +9,13 @@ import org.springframework.stereotype.Service;
 import ru.ravel.nginxconfigbuilder.model.*;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 @Service
@@ -20,6 +23,8 @@ import java.util.Objects;
 public class NginxConfigService {
 
 	private final CertificateService certificateService;
+	private final CertBotService certBotService;
+
 
 	@Value("${nginx.config-path}")
 	private String configPath;
@@ -27,7 +32,7 @@ public class NginxConfigService {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
 
-	public List<Config> getConfigInfo() {
+	public List<Config> getConfigs() {
 		try {
 			NgxConfig conf = NgxConfig.read(configPath);
 			List<Upstream> upstreams = conf.findAll(NgxConfig.BLOCK, "http", "upstream").stream()
@@ -41,7 +46,7 @@ public class NginxConfigService {
 								.build();
 					})
 					.toList();
-			List<Config> configs = conf.findAll(NgxConfig.BLOCK, "http", "server").stream()
+			return conf.findAll(NgxConfig.BLOCK, "http", "server").stream()
 					.map(entry -> (NgxBlock) entry)
 					.map(entry -> {
 						var port = entry.findParam("listen").getValue().split(" ");
@@ -79,27 +84,21 @@ public class NginxConfigService {
 										.proxySetHeaders(proxySetHeaders)
 										.build())
 								.toList();
+						var upstream = upstreams.stream()
+								.filter(u -> locations.stream().anyMatch(l -> l.getProxyPass().endsWith(u.getName())))
+								.findFirst()
+								.orElse(Upstream.builder().build());
 						return Config.builder()
 								.domain(Objects.requireNonNullElse(entry.findParam("server_name"), entry).getValue())
 								.port(Integer.decode(port[0]))
 								.isSsl(port.length > 1 && "ssl".equals(port[1]))
 								.location(locations)
-								.upstream(null)
+								.upstream(upstream)
 								.certificates(getCertificate(entry))
 								.certificatesKeyPath(Objects.requireNonNullElse(entry.findParam("ssl_certificate_key"), entry).getValue())
 								.build();
 					})
 					.toList();
-			configs.stream()
-					.filter(entry -> entry.getLocation() != null)
-					.forEach(entry -> {
-						Upstream upstream = upstreams.stream()
-								.filter(u -> entry.getLocation().stream().anyMatch(l -> l.getProxyPass().endsWith(u.getName())))
-								.findFirst()
-								.orElse(Upstream.builder().build());
-						entry.setUpstream(upstream);
-					});
-			return configs;
 		} catch (IOException e) {
 			logger.error(e.getMessage(), e);
 			return null;
@@ -121,18 +120,107 @@ public class NginxConfigService {
 	private Certificate getCertificate(NgxBlock entry) {
 		NgxParam sslCertificate = entry.findParam("ssl_certificate");
 		if (sslCertificate != null) {
-			if (new File(sslCertificate.getValue()).exists()) {
-				return certificateService.getCertificate(sslCertificate.getValue());
-			} else {
-				return Certificate.builder().path(sslCertificate.getValue()).build();
-			}
+			return new File(sslCertificate.getValue()).exists()
+					? certificateService.getCertificate(sslCertificate.getValue())
+					: Certificate.builder().path(sslCertificate.getValue()).build();
 		}
 		return null;
 	}
 
 
-	public Config addNewConfig(Config config) {
+	public Config saveConfig(Config config) {
+		Pattern pattern = Pattern.compile("^([^/]+?)\\.[a-zA-Z]{2,}(/.*)?$");
+		Matcher matcher = pattern.matcher(config.getDomain());
+		String proxyPass = matcher.matches()
+				? matcher.group(1)
+				: "";
+		try {
+			NgxConfig conf = NgxConfig.read(configPath);
+			NgxBlock server = new NgxBlock();
+			server.addValue("server");
+
+			NgxBlock ngxBlockLocation = new NgxBlock();
+			ngxBlockLocation.addValue("location");
+			ngxBlockLocation.addValue("/");
+
+			NgxParam ngxParam = new NgxParam();
+			ngxParam.addValue("listen %s".formatted(config.getPort()));
+			server.addEntry(ngxParam);
+
+			ngxParam = new NgxParam();
+			ngxParam.addValue("server_name %s".formatted(config.getDomain()));
+			server.addEntry(ngxParam);
+
+			if (config.getIsSsl()) {
+				certBotService.issueCertificate(config.getDomain());
+
+				ngxParam = new NgxParam();
+				ngxParam.addValue("ssl_certificate /etc/letsencrypt/live/%s/fullchain.pem".formatted(config.getDomain()));
+				server.addEntry(ngxParam);
+
+				ngxParam = new NgxParam();
+				ngxParam.addValue("ssl_certificate_key /etc/letsencrypt/live/%s/privkey.pem".formatted(config.getDomain()));
+				server.addEntry(ngxParam);
+
+				ngxParam = new NgxParam();
+				ngxParam.addValue("ssl_protocols TLSv1 TLSv1.1 TLSv1.2");
+				server.addEntry(ngxParam);
+			}
+
+			ngxParam = new NgxParam();
+			ngxParam.addValue("add_header Strict-Transport-Security \"max-age=31536000\"");
+			server.addEntry(ngxParam);
+
+			NgxBlock ngxBlockUpstream = new NgxBlock();
+			ngxBlockUpstream.addValue("upstream");
+			ngxBlockUpstream.addValue(proxyPass);
+			ngxParam = new NgxParam();
+			ngxParam.addValue("server %s:%s".formatted(config.getUpstream().getHost(), config.getUpstream().getPort()));
+			ngxBlockUpstream.addEntry(ngxParam);
+
+			ngxParam = new NgxParam();
+			ngxParam.addValue("proxy_pass %s".formatted(proxyPass));
+			ngxBlockLocation.addEntry(ngxParam);
+
+			ngxParam = new NgxParam();
+			ngxParam.addValue("proxy_set_header Host $host");
+			ngxBlockLocation.addEntry(ngxParam);
+
+			ngxParam = new NgxParam();
+			ngxParam.addValue("proxy_http_version 1.1");
+			ngxBlockLocation.addEntry(ngxParam);
+
+			ngxParam = new NgxParam();
+			ngxParam.addValue("proxy_set_header Upgrade $http_upgrade");
+			ngxBlockLocation.addEntry(ngxParam);
+
+			ngxParam = new NgxParam();
+			ngxParam.addValue("proxy_set_header Connection \"upgrade\"");
+			ngxBlockLocation.addEntry(ngxParam);
+
+			server.addEntry(ngxBlockLocation);
+			conf.findBlock("http").addEntry(ngxBlockUpstream);
+			conf.findBlock("http").addEntry(server);
+			try (FileWriter fileWriter = new FileWriter(configPath)) {
+				fileWriter.write(new NgxDumper(conf).dump());
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+
+		return null;
+	}
+
+
+	public Config deleteConfig(Config config) {
 
 		return config;
 	}
+
+
+	public Config renewCertificate(Config config) {
+
+		return config;
+	}
+
 }
