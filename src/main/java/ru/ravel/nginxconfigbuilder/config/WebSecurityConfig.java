@@ -24,7 +24,7 @@ public class WebSecurityConfig {
 		return http
 				.csrf(AbstractHttpConfigurer::disable)
 				.authorizeHttpRequests(authorize -> authorize
-						.requestMatchers("/js/**", "/css/**", "/logo.png", "/favicon.png").permitAll()
+						.requestMatchers("/js/**", "/css/**","/woff/**","/woff2/**", "/logo.png", "/favicon.png").permitAll()
 						.requestMatchers("/login", "/auth/**").permitAll()
 						.anyRequest().authenticated()
 				)
