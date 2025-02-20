@@ -221,8 +221,8 @@ public class NginxConfigService {
 
 
 	public Config renewCertificate(Config config) {
-
-		return config;
+		certBotService.renewCertificate();
+		return null;
 	}
 
 }

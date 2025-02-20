@@ -8,12 +8,12 @@ RUN yarn build
 
 FROM gradle:8.7.0-jdk21-alpine AS gradle
 COPY --chown=gradle:gradle . /home/gradle/
-COPY --from=nodejs /home/node/nginx-config-builder/dist/spa/.   /home/gradle/src/main/resources/static/
+COPY --from=nodejs /home/node/nginx-config-builder/dist/spa/.  /home/gradle/src/main/resources/static/
 WORKDIR  /home/gradle/
-RUN apk add --no-cache certbot nginx openrc
-RUN nginx
 RUN gradle bootJar
-RUN ls -l /etc/nginx/
-CMD ["java", "-jar", "build/libs/NginxConfigBuilder-0.1.jar"]
 
-#FROM alpine/java:22-jdk AS java
+FROM alpine/java:22-jdk AS java
+WORKDIR /home/java/
+COPY --from=gradle /home/gradle/build/libs/*.jar /home/java/NginxConfigBuilder.jar
+RUN apk add --no-cache certbot nginx openrc
+CMD ["java", "-jar", "NginxConfigBuilder.jar"]
