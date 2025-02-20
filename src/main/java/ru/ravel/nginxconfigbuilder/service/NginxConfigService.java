@@ -204,10 +204,12 @@ public class NginxConfigService {
 			try (FileWriter fileWriter = new FileWriter(configPath)) {
 				fileWriter.write(new NgxDumper(conf).dump());
 			}
-		} catch (IOException e) {
+			Runtime runtime = Runtime.getRuntime();
+			runtime.exec(new String[]{"pkill", "-f", "nginx"}).waitFor();
+			runtime.exec(new String[]{"nginx"});
+		} catch (IOException | InterruptedException e) {
 			throw new RuntimeException(e);
 		}
-
 		return null;
 	}
 
