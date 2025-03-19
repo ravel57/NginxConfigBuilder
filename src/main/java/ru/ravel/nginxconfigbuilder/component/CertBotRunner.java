@@ -32,7 +32,7 @@ public class CertBotRunner implements CommandLineRunner {
 					if (pathExist) {
 						Certificate certificate = certificateService.getCertificate(config.getCertificates().getPath());
 						if (certificate.getNotAfter().isBefore(ZonedDateTime.now())) {
-							certBotService.renewCertificate();
+							certBotService.renewCertificates();
 						}
 					} else {
 						certBotService.issueCertificate(config.getDomain());

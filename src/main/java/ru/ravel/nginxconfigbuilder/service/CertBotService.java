@@ -30,7 +30,7 @@ public class CertBotService {
 	}
 
 
-	public void renewCertificate() {
+	public void renewCertificates() {
 		String[] params = {"certbot", "renew", "--non-interactive", "--quiet"};
 		executeProcess(params);
 	}

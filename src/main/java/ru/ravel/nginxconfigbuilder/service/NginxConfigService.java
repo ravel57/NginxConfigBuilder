@@ -131,9 +131,7 @@ public class NginxConfigService {
 	public Config saveConfig(Config config) {
 		Pattern pattern = Pattern.compile("^([^/]+?)\\.[a-zA-Z]{2,}(/.*)?$");
 		Matcher matcher = pattern.matcher(config.getDomain());
-		String proxyPass = matcher.matches()
-				? matcher.group(1)
-				: "";
+		String proxyPass = matcher.matches() ? matcher.group(1) : "";
 		try {
 			NgxConfig conf = NgxConfig.read(configPath);
 			NgxBlock server = new NgxBlock();
@@ -214,14 +212,53 @@ public class NginxConfigService {
 	}
 
 
-	public Config deleteConfig(Config config) {
-
-		return config;
+	public Config deleteConfig(String domain) {
+		Pattern pattern = Pattern.compile("^([^/]+?)\\.[a-zA-Z]{2,}(/.*)?$");
+		Matcher matcher = pattern.matcher(domain);
+		String proxyPass = matcher.matches() ? matcher.group(1) : "";
+		try {
+			NgxConfig conf = NgxConfig.read(configPath);
+			Collection<NgxEntry> entries = conf.getEntries().stream()
+					.filter(it -> it instanceof NgxBlock)
+					.map(it -> (NgxBlock) it)
+					.filter(it -> it.getTokens().stream().anyMatch(token -> token.toString().equals("http")))
+					.findFirst()
+					.orElseThrow()
+					.getEntries();
+			NgxBlock upstream = entries.stream()
+					.filter(entry -> entry instanceof NgxBlock)
+					.map(it -> (NgxBlock) it)
+					.filter(entry -> entry.getTokens().stream()
+							.anyMatch(it -> it.toString().contains(proxyPass)))
+					.findFirst()
+					.orElseThrow();
+			entries.remove(upstream);
+			NgxBlock server = entries.stream()
+					.filter(entry -> entry instanceof NgxBlock)
+					.map(it -> (NgxBlock) it)
+					.filter(entry -> entry.getTokens().stream()
+							.anyMatch(it -> it.toString().equals("server")))
+					.filter(entry -> entry.getEntries().stream()
+							.anyMatch(it -> it.toString().equals("server_name %s;".formatted(domain))))
+					.findFirst()
+					.orElseThrow();
+			entries.remove(server);
+			try (FileWriter fileWriter = new FileWriter(configPath)) {
+				fileWriter.write(new NgxDumper(conf).dump());
+			}
+			Runtime runtime = Runtime.getRuntime();
+			runtime.exec(new String[]{"pkill", "-f", "nginx"}).waitFor();
+			runtime.exec(new String[]{"nginx"});
+			System.out.println();
+		} catch (IOException | InterruptedException e) {
+			throw new RuntimeException(e);
+		}
+		return null;
 	}
 
 
-	public Config renewCertificate(Config config) {
-		certBotService.renewCertificate();
+	public Config renewCertificate() {
+		certBotService.renewCertificates();
 		return null;
 	}
 

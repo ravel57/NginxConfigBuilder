@@ -27,15 +27,15 @@ public class ApiController {
 	}
 
 
-	@DeleteMapping("/config")
-	public ResponseEntity<Object> deleteConfig(@RequestBody Config config) {
-		return ResponseEntity.ok().body(nginxConfigService.deleteConfig(config));
+	@DeleteMapping("/config/{domain}")
+	public ResponseEntity<Object> deleteConfig(@PathVariable String domain) {
+		return ResponseEntity.ok().body(nginxConfigService.deleteConfig(domain));
 	}
 
 
 	@PostMapping("/renew-certificate")
 	public ResponseEntity<Object> renewCertificate(@RequestBody Config config) {
-		return ResponseEntity.ok().body(nginxConfigService.renewCertificate(config));
+		return ResponseEntity.ok().body(nginxConfigService.renewCertificate());
 	}
 
 
