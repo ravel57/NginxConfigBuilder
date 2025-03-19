@@ -129,6 +129,9 @@ public class NginxConfigService {
 
 
 	public Config saveConfig(Config config) {
+		if (!NetworkService.pingAddress(config.getDomain())) {
+			return null;
+		}
 		Pattern pattern = Pattern.compile("^([^/]+?)\\.[a-zA-Z]{2,}(/.*)?$");
 		Matcher matcher = pattern.matcher(config.getDomain());
 		String proxyPass = matcher.matches() ? matcher.group(1) : "";
