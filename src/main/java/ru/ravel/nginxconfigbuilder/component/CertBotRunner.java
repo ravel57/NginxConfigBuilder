@@ -25,13 +25,19 @@ public class CertBotRunner implements CommandLineRunner {
 	public void run(String... args) {
 		nginxConfigService.getConfigs()
 				.stream()
-				.filter(config -> config.getDomain() != null)
-				.filter(config -> !config.getDomain().isEmpty())
+				.filter(config -> config.getDomain() != null && !config.getDomain().isEmpty())
+				.filter(config -> Boolean.TRUE.equals(config.getIsSsl()))
+				.filter(config -> config.getCertificates() != null
+						&& config.getCertificates().getPath() != null
+						&& !config.getCertificates().getPath().isBlank())
 				.forEach(config -> {
-					boolean pathExist = new File(config.getCertificates().getPath()).exists();
+					String path = config.getCertificates().getPath();
+					boolean pathExist = new File(path).exists();
 					if (pathExist) {
-						Certificate certificate = certificateService.getCertificate(config.getCertificates().getPath());
-						if (certificate.getNotAfter().isBefore(ZonedDateTime.now())) {
+						Certificate certificate = certificateService.getCertificate(path);
+						if (certificate != null
+								&& certificate.getNotAfter() != null
+								&& certificate.getNotAfter().isBefore(ZonedDateTime.now())) {
 							certBotService.renewCertificates();
 						}
 					} else {
