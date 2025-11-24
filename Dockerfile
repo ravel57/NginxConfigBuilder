@@ -15,5 +15,6 @@ RUN gradle bootJar
 FROM alpine/java:22-jdk AS java
 WORKDIR /home/java/
 COPY --from=gradle /home/gradle/build/libs/*.jar /home/java/NginxConfigBuilder.jar
-RUN apk add --no-cache certbot nginx openrc
+RUN apk add --no-cache certbot nginx openrc nginx-mod-stream
+RUN mv /etc/nginx/conf.d/stream.conf /etc/nginx/conf.d/stream.conf.disabled
 CMD ["java", "-jar", "NginxConfigBuilder.jar"]
